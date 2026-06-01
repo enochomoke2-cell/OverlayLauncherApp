@@ -13,43 +13,56 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val layout = LinearLayout(this).apply {
+        val layout = LinearLayout(this@MainActivity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(40, 60, 40, 40)
         }
 
-        val info = TextView(this).apply {
+        val info = TextView(this@MainActivity).apply {
             text = "Overlay Launcher\n\n1. Grant display over other apps permission.\n2. Start floating launcher.\n\nNote: Android does not allow normal apps to embed/run other apps inside this app. This app launches them from a floating overlay."
             textSize = 16f
         }
 
-        val permissionBtn = Button(this).apply {
+        val permissionBtn = Button(this@MainActivity).apply {
             text = "Grant Overlay Permission"
             setOnClickListener {
-                startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+                startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:$packageName")
+                    )
+                )
             }
         }
 
-        val startBtn = Button(this).apply {
+        val startBtn = Button(this@MainActivity).apply {
             text = "Start Floating Launcher"
             setOnClickListener {
                 if (Settings.canDrawOverlays(this@MainActivity)) {
                     startService(Intent(this@MainActivity, OverlayService::class.java))
                 } else {
-                    startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+                    startActivity(
+                        Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:$packageName")
+                        )
+                    )
                 }
             }
         }
 
-        val stopBtn = Button(this).apply {
+        val stopBtn = Button(this@MainActivity).apply {
             text = "Stop Floating Launcher"
-            setOnClickListener { stopService(Intent(this@MainActivity, OverlayService::class.java)) }
+            setOnClickListener {
+                stopService(Intent(this@MainActivity, OverlayService::class.java))
+            }
         }
 
         layout.addView(info)
         layout.addView(permissionBtn)
         layout.addView(startBtn)
         layout.addView(stopBtn)
-        setContentView(layout)
+
+        this@MainActivity.setContentView(layout)
     }
 }
