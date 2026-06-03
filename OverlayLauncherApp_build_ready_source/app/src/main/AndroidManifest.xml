@@ -4,12 +4,10 @@
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <application
-        android:theme="@style/AppTheme"
-        android:label="OL Glass Launcher"
-        android:icon="@drawable/ic_launcher"
-        android:roundIcon="@drawable/ic_launcher"
-        android:allowBackup="true"
-        android:usesCleartextTraffic="true">
+    android:theme="@style/AppTheme"
+    android:label="OL Glass Launcher"
+    android:allowBackup="true"
+    android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
