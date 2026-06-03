@@ -1,5 +1,6 @@
 package com.example.overlaylauncher
 
+import android.content.ComponentName
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
@@ -30,7 +31,9 @@ class MainActivity : Activity() {
         updateStatus()
     }
 
-    private fun createUi(): ScrollView {
+    private fun createUi(val defaultLauncherBtn = expressiveButton("Set as Default Launcher", "#D0BCFF", "#21005D") {
+    openDefaultLauncherChooser()
+}): ScrollView {
         val root = ScrollView(this)
         root.setBackgroundColor(Color.parseColor("#F7F2FA"))
 
@@ -111,6 +114,7 @@ class MainActivity : Activity() {
         card.addView(permissionBtn)
         card.addView(startBtn)
         card.addView(stopBtn)
+        card.addView(defaultLauncherBtn)
         card.addView(appSettingsBtn)
         card.addView(note)
 
@@ -124,6 +128,10 @@ class MainActivity : Activity() {
 
     private fun updateStatus() {
         val overlayAllowed = Settings.canDrawOverlays(this)
+    private fun openDefaultLauncherChooser() {
+    val intent = Intent(Settings.ACTION_HOME_SETTINGS)
+    startActivity(intent)
+}
 
         permissionStatus.text = if (overlayAllowed) {
             "Overlay permission: Allowed"
