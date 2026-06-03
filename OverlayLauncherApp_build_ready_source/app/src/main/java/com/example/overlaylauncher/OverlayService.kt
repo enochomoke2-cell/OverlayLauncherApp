@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.IBinder
 import android.provider.Settings
 import android.view.Gravity
@@ -15,11 +16,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import java.util.Locale
+import kotlin.math.abs
 
 class OverlayService : Service() {
 
@@ -28,6 +31,7 @@ class OverlayService : Service() {
     private lateinit var params: WindowManager.LayoutParams
 
     private var isMinimized = false
+    private var searchQuery = ""
 
     private val prefs by lazy {
         getSharedPreferences("overlay_launcher_prefs", MODE_PRIVATE)
@@ -54,59 +58,104 @@ class OverlayService : Service() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(22, 22, 22, 22)
-            background = roundedBg("#F7F2FA", 34)
-            elevation = 12f
+            background = glassBg()
+            elevation = 18f
         }
 
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(18, 16, 18, 16)
-            background = roundedBg("#6750A4", 30)
+            setPadding(22, 18, 22, 18)
+            background = roundedBg("#AA6750A4", 36, "#55FFFFFF")
         }
 
         val title = TextView(this).apply {
-            text = "OL Floating Launcher"
-            setTextColor(Color.WHITE)
-            textSize = 20f
+            text = "OL Glass Launcher"
+            textSize = 21f
             typeface = Typeface.DEFAULT_BOLD
+            setTextColor(Color.WHITE)
         }
 
         val subtitle = TextView(this).apply {
-            text = "Drag here • Launch apps faster"
-            setTextColor(Color.parseColor("#EADDFF"))
+            text = "Floating launcher • Favorites • Search • Recent apps"
             textSize = 13f
+            setTextColor(Color.parseColor("#F2E7FE"))
             setPadding(0, 5, 0, 0)
         }
 
         header.addView(title)
         header.addView(subtitle)
 
-        val controls = LinearLayout(this).apply {
+        val searchBox = EditText(this).apply {
+            hint = "Search apps..."
+            textSize = 15f
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.parseColor("#D8CFF2"))
+            setSingleLine(true)
+            background = roundedBg("#33FFFFFF", 30, "#44FFFFFF")
+            setPadding(22, 12, 22, 12)
+            setText(searchQuery)
+
+            val lp = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            lp.setMargins(0, 16, 0, 12)
+            layoutParams = lp
+
+            setOnEditorActionListener { _, _, _ ->
+                searchQuery = text.toString()
+                showFullOverlay()
+                true
+            }
+        }
+
+        val controls1 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            setPadding(0, 16, 0, 12)
             gravity = Gravity.CENTER
+            setPadding(0, 8, 0, 6)
         }
 
-        val minimizeBtn = smallButton("Minimize", "#EADDFF", "#21005D") {
-            showBubble()
-        }
-
-        val frontBtn = smallButton("Bring Top", "#D0BCFF", "#21005D") {
-            bringOverlayToFront()
-        }
-
-        val refreshBtn = smallButton("Refresh", "#E8DEF8", "#1D192B") {
+        controls1.addView(smallGlassButton("Search", "#CC6750A4") {
+            searchQuery = searchBox.text.toString()
             showFullOverlay()
-        }
+        })
 
-        val closeBtn = smallButton("Close", "#FFDAD6", "#410002") {
+        controls1.addView(smallGlassButton("Clear", "#665F6368") {
+            searchQuery = ""
+            showFullOverlay()
+        })
+
+        controls1.addView(smallGlassButton("Minimize", "#CC006D3B") {
+            showBubble()
+        })
+
+        controls1.addView(smallGlassButton("Close", "#CCBA1A1A") {
             stopSelf()
+        })
+
+        val controls2 = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(0, 4, 0, 12)
         }
 
-        controls.addView(minimizeBtn)
-        controls.addView(frontBtn)
-        controls.addView(refreshBtn)
-        controls.addView(closeBtn)
+        controls2.addView(smallGlassButton("Bring Top", "#CC6750A4") {
+            bringOverlayToFront()
+            toast("Overlay brought to front")
+        })
+
+        controls2.addView(smallGlassButton("Refresh", "#CC625B71") {
+            showFullOverlay()
+        })
+
+        controls2.addView(smallGlassButton("Settings", "#CC1D6C8D") {
+            openAppSettings()
+        })
+
+        controls2.addView(smallGlassButton("Clear Recent", "#CC7D5260") {
+            prefs.edit().remove("recent").apply()
+            showFullOverlay()
+        })
 
         val scroll = ScrollView(this)
         val list = LinearLayout(this).apply {
@@ -115,13 +164,19 @@ class OverlayService : Service() {
         }
 
         buildAppSections(list)
-
         scroll.addView(list)
-        root.addView(header)
-        root.addView(controls)
-        root.addView(scroll, LinearLayout.LayoutParams(560, 760))
 
-        params = createOverlayParams(width = WindowManager.LayoutParams.WRAP_CONTENT, height = WindowManager.LayoutParams.WRAP_CONTENT)
+        root.addView(header)
+        root.addView(searchBox)
+        root.addView(controls1)
+        root.addView(controls2)
+        root.addView(scroll, LinearLayout.LayoutParams(620, 780))
+
+        params = createOverlayParams(
+            width = WindowManager.LayoutParams.WRAP_CONTENT,
+            height = WindowManager.LayoutParams.WRAP_CONTENT
+        )
+
         enableDrag(header, root)
 
         overlayView = root
@@ -132,25 +187,34 @@ class OverlayService : Service() {
         isMinimized = true
         removeCurrentOverlay()
 
-        val bubble = TextView(this).apply {
+        val bubble = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            background = roundedBg("#BB6750A4", 100, "#88FFFFFF")
+            elevation = 20f
+        }
+
+        val text = TextView(this).apply {
             text = "OL"
-            textSize = 20f
+            textSize = 21f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
             setTextColor(Color.WHITE)
-            background = roundedBg("#6750A4", 100)
-            elevation = 16f
-            setOnClickListener {
-                showFullOverlay()
-            }
-            setOnLongClickListener {
-                bringOverlayToFront()
-                Toast.makeText(this@OverlayService, "Overlay brought to front", Toast.LENGTH_SHORT).show()
-                true
-            }
         }
 
-        params = createOverlayParams(width = 130, height = 130)
+        bubble.addView(text)
+
+        bubble.setOnClickListener {
+            showFullOverlay()
+        }
+
+        bubble.setOnLongClickListener {
+            bringOverlayToFront()
+            toast("Overlay brought to front")
+            true
+        }
+
+        params = createOverlayParams(width = 135, height = 135)
         enableDrag(bubble, bubble)
 
         overlayView = bubble
@@ -158,7 +222,11 @@ class OverlayService : Service() {
     }
 
     private fun buildAppSections(list: LinearLayout) {
-        val apps = getLaunchableApps()
+        val apps = getLaunchableApps().filter {
+            val label = packageManager.getApplicationLabel(it).toString()
+            searchQuery.isBlank() || label.lowercase(Locale.getDefault())
+                .contains(searchQuery.lowercase(Locale.getDefault()))
+        }
 
         val favorites = getFavorites()
         val recent = getRecentApps()
@@ -170,22 +238,21 @@ class OverlayService : Service() {
         }
 
         if (favoriteApps.isNotEmpty()) {
-            list.addView(sectionTitle("Favorites"))
-            favoriteApps.forEach { app ->
-                list.addView(appButton(app, true))
-            }
+            list.addView(sectionTitle("★ Favorites"))
+            favoriteApps.forEach { list.addView(appButton(it, true)) }
         }
 
         if (recentApps.isNotEmpty()) {
             list.addView(sectionTitle("Recent Apps"))
-            recentApps.take(6).forEach { app ->
-                list.addView(appButton(app, false))
-            }
+            recentApps.take(8).forEach { list.addView(appButton(it, false)) }
         }
 
-        list.addView(sectionTitle("All Apps"))
-        normalApps.forEach { app ->
-            list.addView(appButton(app, false))
+        list.addView(sectionTitle(if (searchQuery.isBlank()) "All Apps" else "Search Results"))
+
+        if (normalApps.isEmpty() && favoriteApps.isEmpty() && recentApps.isEmpty()) {
+            list.addView(emptyState())
+        } else {
+            normalApps.forEach { list.addView(appButton(it, false)) }
         }
     }
 
@@ -198,9 +265,9 @@ class OverlayService : Service() {
             textSize = 14f
             isAllCaps = false
             gravity = Gravity.CENTER_VERTICAL
-            setTextColor(Color.parseColor("#1C1B1F"))
-            background = roundedBg("#FFFBFE", 24)
-            setPadding(20, 12, 20, 12)
+            setTextColor(Color.WHITE)
+            background = roundedBg("#33FFFFFF", 26, "#55FFFFFF")
+            setPadding(24, 14, 24, 14)
 
             val lp = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -215,12 +282,12 @@ class OverlayService : Service() {
 
             setOnLongClickListener {
                 toggleFavorite(app.packageName)
-                val message = if (getFavorites().contains(app.packageName)) {
+                val msg = if (getFavorites().contains(app.packageName)) {
                     "$label added to favorites"
                 } else {
                     "$label removed from favorites"
                 }
-                Toast.makeText(this@OverlayService, message, Toast.LENGTH_SHORT).show()
+                toast(msg)
                 showFullOverlay()
                 true
             }
@@ -234,9 +301,13 @@ class OverlayService : Service() {
             addRecent(packageName)
             launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(launchIntent)
-            Toast.makeText(this, "Opening app", Toast.LENGTH_SHORT).show()
+
+            val autoMinimize = prefs.getBoolean("auto_minimize", true)
+            if (autoMinimize) {
+                showBubble()
+            }
         } else {
-            Toast.makeText(this, "Unable to open app", Toast.LENGTH_SHORT).show()
+            toast("Unable to open app")
         }
     }
 
@@ -248,28 +319,33 @@ class OverlayService : Service() {
             }
     }
 
-    private fun sectionTitle(textValue: String): TextView {
+    private fun sectionTitle(value: String): TextView {
         return TextView(this).apply {
-            text = textValue
+            text = value
             textSize = 15f
             typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#6750A4"))
-            setPadding(4, 18, 4, 8)
+            setTextColor(Color.WHITE)
+            setPadding(8, 18, 8, 8)
         }
     }
 
-    private fun smallButton(
-        label: String,
-        bg: String,
-        textColor: String,
-        action: () -> Unit
-    ): Button {
+    private fun emptyState(): TextView {
+        return TextView(this).apply {
+            text = "No apps found"
+            textSize = 14f
+            setTextColor(Color.parseColor("#F2E7FE"))
+            gravity = Gravity.CENTER
+            setPadding(0, 30, 0, 30)
+        }
+    }
+
+    private fun smallGlassButton(label: String, bg: String, action: () -> Unit): Button {
         return Button(this).apply {
             text = label
-            textSize = 12f
+            textSize = 11.5f
             isAllCaps = false
-            setTextColor(Color.parseColor(textColor))
-            background = roundedBg(bg, 22)
+            setTextColor(Color.WHITE)
+            background = roundedBg(bg, 24, "#55FFFFFF")
             setPadding(8, 6, 8, 6)
 
             val lp = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
@@ -305,8 +381,7 @@ class OverlayService : Service() {
 
         items.add(0, packageName)
 
-        val limited = items.take(8).joinToString("|")
-        prefs.edit().putString("recent", limited).apply()
+        prefs.edit().putString("recent", items.take(10).joinToString("|")).apply()
     }
 
     private fun getRecentApps(): List<String> {
@@ -328,6 +403,13 @@ class OverlayService : Service() {
         }
     }
 
+    private fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        intent.data = Uri.parse("package:$packageName")
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+    }
+
     private fun createOverlayParams(width: Int, height: Int): WindowManager.LayoutParams {
         return WindowManager.LayoutParams(
             width,
@@ -337,8 +419,8 @@ class OverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = 80
-            y = 160
+            x = prefs.getInt("overlay_x", 80)
+            y = prefs.getInt("overlay_y", 160)
         }
     }
 
@@ -364,7 +446,7 @@ class OverlayService : Service() {
                     val dx = (event.rawX - initialTouchX).toInt()
                     val dy = (event.rawY - initialTouchY).toInt()
 
-                    if (kotlin.math.abs(dx) > 6 || kotlin.math.abs(dy) > 6) {
+                    if (abs(dx) > 6 || abs(dy) > 6) {
                         moved = true
                     }
 
@@ -380,9 +462,15 @@ class OverlayService : Service() {
                 }
 
                 MotionEvent.ACTION_UP -> {
+                    prefs.edit()
+                        .putInt("overlay_x", params.x)
+                        .putInt("overlay_y", params.y)
+                        .apply()
+
                     if (!moved && isMinimized) {
                         showFullOverlay()
                     }
+
                     true
                 }
 
@@ -391,12 +479,34 @@ class OverlayService : Service() {
         }
     }
 
-    private fun roundedBg(color: String, radius: Int): GradientDrawable {
+    private fun glassBg(): GradientDrawable {
+        return GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(
+                Color.parseColor("#CC1C1B1F"),
+                Color.parseColor("#AA6750A4"),
+                Color.parseColor("#AA006D77")
+            )
+        ).apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 42f
+            setStroke(2, Color.parseColor("#66FFFFFF"))
+        }
+    }
+
+    private fun roundedBg(color: String, radius: Int, strokeColor: String? = null): GradientDrawable {
         return GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = radius.toFloat()
             setColor(Color.parseColor(color))
+            if (strokeColor != null) {
+                setStroke(2, Color.parseColor(strokeColor))
+            }
         }
+    }
+
+    private fun toast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     private fun removeCurrentOverlay() {
