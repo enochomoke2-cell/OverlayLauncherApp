@@ -1,6 +1,5 @@
 package com.example.overlaylauncher
 
-import android.content.ComponentName
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
@@ -31,9 +30,7 @@ class MainActivity : Activity() {
         updateStatus()
     }
 
-    private fun createUi(val defaultLauncherBtn = expressiveButton("Set as Default Launcher", "#D0BCFF", "#21005D") {
-    openDefaultLauncherChooser()
-}): ScrollView {
+    private fun createUi(): ScrollView {
         val root = ScrollView(this)
         root.setBackgroundColor(Color.parseColor("#F7F2FA"))
 
@@ -96,6 +93,10 @@ class MainActivity : Activity() {
             updateStatus()
         }
 
+        val defaultLauncherBtn = expressiveButton("Set as Default Launcher", "#D0BCFF", "#21005D") {
+            openDefaultLauncherChooser()
+        }
+
         val appSettingsBtn = expressiveButton("Open App Settings", "#EADDFF", "#21005D") {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
             intent.data = Uri.parse("package:$packageName")
@@ -103,7 +104,7 @@ class MainActivity : Activity() {
         }
 
         val note = TextView(this).apply {
-            text = "Use the overlay permission first, then start the floating launcher."
+            text = "Use overlay permission first, then start the floating launcher. To use it as your home screen, tap Set as Default Launcher."
             textSize = 14f
             setTextColor(Color.parseColor("#625B71"))
             setPadding(0, 26, 0, 0)
@@ -128,10 +129,6 @@ class MainActivity : Activity() {
 
     private fun updateStatus() {
         val overlayAllowed = Settings.canDrawOverlays(this)
-    private fun openDefaultLauncherChooser() {
-    val intent = Intent(Settings.ACTION_HOME_SETTINGS)
-    startActivity(intent)
-}
 
         permissionStatus.text = if (overlayAllowed) {
             "Overlay permission: Allowed"
@@ -151,6 +148,11 @@ class MainActivity : Activity() {
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
             Uri.parse("package:$packageName")
         )
+        startActivity(intent)
+    }
+
+    private fun openDefaultLauncherChooser() {
+        val intent = Intent(Settings.ACTION_HOME_SETTINGS)
         startActivity(intent)
     }
 
