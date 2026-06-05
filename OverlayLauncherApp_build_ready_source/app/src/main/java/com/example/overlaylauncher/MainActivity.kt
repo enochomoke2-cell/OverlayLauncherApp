@@ -1,19 +1,17 @@
 package com.example.overlaylauncher
 
-import android.graphics.Canvas
-import android.graphics.LinearGradient
-import android.graphics.Paint
-import android.graphics.RadialGradient
-import android.graphics.Shader
-import android.widget.FrameLayout
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.RadialGradient
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.text.Editable
@@ -23,6 +21,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -69,22 +68,21 @@ class MainActivity : Activity() {
     }
 
     private fun buildLauncher() {
-    val liquidRoot = FrameLayout(this)
+        val liquidRoot = FrameLayout(this)
 
-    val liquidBackground = LiquidGlassBackground(this)
-    liquidRoot.addView(
-        liquidBackground,
-        FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
+        val liquidBackground = LiquidGlassBackground(this)
+        liquidRoot.addView(
+            liquidBackground,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
         )
-    )
 
-    rootScroll = ScrollView(this).apply {
-        setBackgroundColor(Color.TRANSPARENT)
-        overScrollMode = ScrollView.OVER_SCROLL_NEVER
-        isFillViewport = true
-    }
+        rootScroll = ScrollView(this).apply {
+            setBackgroundColor(Color.TRANSPARENT)
+            overScrollMode = ScrollView.OVER_SCROLL_NEVER
+            isFillViewport = true
         }
 
         mainLayout = LinearLayout(this).apply {
@@ -116,17 +114,17 @@ class MainActivity : Activity() {
 
         rootScroll.addView(mainLayout)
 
-liquidRoot.addView(
-    rootScroll,
-    FrameLayout.LayoutParams(
-        ViewGroup.LayoutParams.MATCH_PARENT,
-        ViewGroup.LayoutParams.MATCH_PARENT
-    )
-)
+        liquidRoot.addView(
+            rootScroll,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
 
-setContentView(liquidRoot)
+        setContentView(liquidRoot)
 
-rebuildApps()
+        rebuildApps()
     }
 
     private fun createTopArea(): LinearLayout {
@@ -196,14 +194,26 @@ rebuildApps()
             layoutParams = lp
 
             addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
+                }
 
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                override fun onTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    before: Int,
+                    count: Int
+                ) {
                     searchQuery = s?.toString() ?: ""
                     rebuildApps()
                 }
 
-                override fun afterTextChanged(s: Editable?) {}
+                override fun afterTextChanged(s: Editable?) {
+                }
             })
 
             setOnClickListener {
@@ -233,7 +243,7 @@ rebuildApps()
             buildLauncher()
         })
 
-        controls.addView(pill("Icons ${iconSizeDp}") {
+        controls.addView(pill("Icons $iconSizeDp") {
             val next = when (iconSizeDp) {
                 52 -> 58
                 58 -> 66
@@ -261,7 +271,8 @@ rebuildApps()
         val allApps = getLaunchableApps().filter {
             val label = packageManager.getApplicationLabel(it).toString()
             searchQuery.isBlank() ||
-                    label.lowercase(Locale.getDefault()).contains(searchQuery.lowercase(Locale.getDefault()))
+                    label.lowercase(Locale.getDefault())
+                        .contains(searchQuery.lowercase(Locale.getDefault()))
         }
 
         val favorites = getFavorites()
@@ -285,7 +296,11 @@ rebuildApps()
             appsContainer.addView(appGrid(recentApps.take(8)))
         }
 
-        appsContainer.addView(sectionTitle(if (searchQuery.isBlank()) "All Apps" else "Search Results"))
+        appsContainer.addView(
+            sectionTitle(
+                if (searchQuery.isBlank()) "All Apps" else "Search Results"
+            )
+        )
 
         if (allApps.isEmpty()) {
             appsContainer.addView(emptyState())
@@ -293,8 +308,7 @@ rebuildApps()
             appsContainer.addView(appGrid(normalApps))
         }
 
-        val bottomSettings = createBottomSettings()
-        appsContainer.addView(bottomSettings)
+        appsContainer.addView(createBottomSettings())
     }
 
     private fun appGrid(apps: List<ApplicationInfo>): GridLayout {
@@ -406,7 +420,7 @@ rebuildApps()
         }
 
         val iconPack = TextView(this).apply {
-            text = "Icon packs: stock icons active. Third-party icon-pack picker is ready for next parser upgrade."
+            text = "Stock icons active. Third-party icon pack selector can be added next."
             textSize = 13f
             setTextColor(Color.parseColor("#D8E7FF"))
             setPadding(0, 0, 0, dp(12))
@@ -546,99 +560,109 @@ rebuildApps()
     }
 
     private fun glassPanel(): GradientDrawable {
-    val colors = if (glassStrong) {
-        intArrayOf(
-            Color.parseColor("#72FFFFFF"),
-            Color.parseColor("#36FFFFFF"),
-            Color.parseColor("#18FFFFFF")
+        val colors = if (glassStrong) {
+            intArrayOf(
+                Color.parseColor("#72FFFFFF"),
+                Color.parseColor("#36FFFFFF"),
+                Color.parseColor("#18FFFFFF")
+            )
+        } else {
+            intArrayOf(
+                Color.parseColor("#46FFFFFF"),
+                Color.parseColor("#24FFFFFF"),
+                Color.parseColor("#10FFFFFF")
+            )
+        }
+
+        return GradientDrawable(GradientDrawable.Orientation.TL_BR, colors).apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = dp(34).toFloat()
+            setStroke(dp(1), Color.parseColor("#88FFFFFF"))
+        }
+    }
+
+    private fun searchBackground(): GradientDrawable {
+        return GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            intArrayOf(
+                Color.parseColor("#78FFFFFF"),
+                Color.parseColor("#38FFFFFF"),
+                Color.parseColor("#22FFFFFF")
+            )
+        ).apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = dp(32).toFloat()
+            setStroke(dp(1), Color.parseColor("#99FFFFFF"))
+        }
+    }
+
+    private fun transparentCard(): GradientDrawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = dp(22).toFloat()
+            setColor(Color.parseColor("#00FFFFFF"))
+        }
+    }
+
+    private fun iconGlass(packageName: String): GradientDrawable {
+        val accent = appColor(packageName)
+
+        val start = Color.argb(
+            170,
+            Color.red(accent),
+            Color.green(accent),
+            Color.blue(accent)
         )
-    } else {
-        intArrayOf(
-            Color.parseColor("#46FFFFFF"),
-            Color.parseColor("#24FFFFFF"),
-            Color.parseColor("#10FFFFFF")
+
+        val middle = Color.argb(
+            90,
+            Color.red(accent),
+            Color.green(accent),
+            Color.blue(accent)
         )
+
+        val end = Color.parseColor("#26FFFFFF")
+
+        return GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(start, middle, end)
+        ).apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = dp(24).toFloat()
+            setStroke(dp(1), Color.parseColor("#99FFFFFF"))
+        }
     }
 
-    return GradientDrawable(GradientDrawable.Orientation.TL_BR, colors).apply {
-        shape = GradientDrawable.RECTANGLE
-        cornerRadius = dp(34).toFloat()
-        setStroke(dp(1), Color.parseColor("#88FFFFFF"))
-    }
-}
-
-private fun searchBackground(): GradientDrawable {
-    return GradientDrawable(
-        GradientDrawable.Orientation.LEFT_RIGHT,
-        intArrayOf(
-            Color.parseColor("#78FFFFFF"),
-            Color.parseColor("#38FFFFFF"),
-            Color.parseColor("#22FFFFFF")
+    private fun appColor(packageName: String): Int {
+        val colors = intArrayOf(
+            Color.parseColor("#7A5CFF"),
+            Color.parseColor("#36D1DC"),
+            Color.parseColor("#64D2FF"),
+            Color.parseColor("#FF7AB6"),
+            Color.parseColor("#FFD166"),
+            Color.parseColor("#06D6A0"),
+            Color.parseColor("#FF8A65"),
+            Color.parseColor("#B388FF")
         )
-    ).apply {
-        shape = GradientDrawable.RECTANGLE
-        cornerRadius = dp(32).toFloat()
-        setStroke(dp(1), Color.parseColor("#99FFFFFF"))
+
+        val index = kotlin.math.abs(packageName.hashCode()) % colors.size
+        return colors[index]
     }
-}
 
-private fun iconGlass(packageName: String): GradientDrawable {
-    val accent = appColor(packageName)
-
-    val start = Color.argb(
-        170,
-        Color.red(accent),
-        Color.green(accent),
-        Color.blue(accent)
-    )
-
-    val middle = Color.argb(
-        90,
-        Color.red(accent),
-        Color.green(accent),
-        Color.blue(accent)
-    )
-
-    val end = Color.parseColor("#26FFFFFF")
-
-    return GradientDrawable(
-        GradientDrawable.Orientation.TL_BR,
-        intArrayOf(start, middle, end)
-    ).apply {
-        shape = GradientDrawable.RECTANGLE
-        cornerRadius = dp(24).toFloat()
-        setStroke(dp(1), Color.parseColor("#99FFFFFF"))
+    private fun pillBg(): GradientDrawable {
+        return GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            intArrayOf(
+                Color.parseColor("#64FFFFFF"),
+                Color.parseColor("#28FFFFFF")
+            )
+        ).apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = dp(26).toFloat()
+            setStroke(dp(1), Color.parseColor("#88FFFFFF"))
+        }
     }
-}
 
-private fun appColor(packageName: String): Int {
-    val colors = intArrayOf(
-        Color.parseColor("#7A5CFF"), // purple
-        Color.parseColor("#36D1DC"), // cyan
-        Color.parseColor("#64D2FF"), // blue
-        Color.parseColor("#FF7AB6"), // pink
-        Color.parseColor("#FFD166"), // yellow
-        Color.parseColor("#06D6A0"), // green
-        Color.parseColor("#FF8A65"), // coral
-        Color.parseColor("#B388FF")  // soft violet
-    )
-
-    val index = kotlin.math.abs(packageName.hashCode()) % colors.size
-    return colors[index]
-}
-private fun pillBg(): GradientDrawable {
-    return GradientDrawable(
-        GradientDrawable.Orientation.LEFT_RIGHT,
-        intArrayOf(
-            Color.parseColor("#64FFFFFF"),
-            Color.parseColor("#28FFFFFF")
-        )
-    ).apply {
-        shape = GradientDrawable.RECTANGLE
-        cornerRadius = dp(26).toFloat()
-        setStroke(dp(1), Color.parseColor("#88FFFFFF"))
-    }
-}
     private fun toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
@@ -647,6 +671,7 @@ private fun pillBg(): GradientDrawable {
         return (value * resources.displayMetrics.density).toInt()
     }
 }
+
 class LiquidGlassBackground(context: Context) : View(context) {
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -698,6 +723,7 @@ class LiquidGlassBackground(context: Context) : View(context) {
         alpha: Int
     ) {
         val baseColor = Color.parseColor(color)
+
         val centerColor = Color.argb(
             alpha,
             Color.red(baseColor),
