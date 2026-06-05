@@ -4,20 +4,18 @@
 
     <application
         android:theme="@style/AppTheme"
-        android:label="OL Glass Launcher"
+        android:label="OL Pixel Glass"
         android:allowBackup="true">
 
         <activity
             android:name=".MainActivity"
             android:exported="true">
 
-            <!-- Normal app launch -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Make this app selectable as default home launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
