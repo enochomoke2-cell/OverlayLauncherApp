@@ -1,25 +1,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <application
-    android:theme="@style/AppTheme"
-    android:label="OL Glass Launcher"
-    android:allowBackup="true"
-    android:usesCleartextTraffic="true">
+        android:theme="@style/AppTheme"
+        android:label="OL Glass Launcher"
+        android:allowBackup="true">
 
         <activity
             android:name=".MainActivity"
             android:exported="true">
 
-            <!-- Normal app icon launch -->
+            <!-- Normal app launch -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Make app available as default Home launcher -->
+            <!-- Make this app selectable as default home launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
@@ -27,10 +25,6 @@
             </intent-filter>
 
         </activity>
-
-        <service
-            android:name=".OverlayService"
-            android:exported="false" />
 
     </application>
 
