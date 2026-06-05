@@ -1,5 +1,11 @@
 package com.example.overlaylauncher
 
+import android.graphics.Canvas
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.RadialGradient
+import android.graphics.Shader
+import android.widget.FrameLayout
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -63,10 +69,22 @@ class MainActivity : Activity() {
     }
 
     private fun buildLauncher() {
-        rootScroll = ScrollView(this).apply {
-            setBackgroundColor(Color.parseColor("#0B1020"))
-            overScrollMode = ScrollView.OVER_SCROLL_NEVER
-            isFillViewport = true
+    val liquidRoot = FrameLayout(this)
+
+    val liquidBackground = LiquidGlassBackground(this)
+    liquidRoot.addView(
+        liquidBackground,
+        FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+    )
+
+    rootScroll = ScrollView(this).apply {
+        setBackgroundColor(Color.TRANSPARENT)
+        overScrollMode = ScrollView.OVER_SCROLL_NEVER
+        isFillViewport = true
+    }
         }
 
         mainLayout = LinearLayout(this).apply {
@@ -97,9 +115,18 @@ class MainActivity : Activity() {
         }
 
         rootScroll.addView(mainLayout)
-        setContentView(rootScroll)
 
-        rebuildApps()
+liquidRoot.addView(
+    rootScroll,
+    FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT
+    )
+)
+
+setContentView(liquidRoot)
+
+rebuildApps()
     }
 
     private fun createTopArea(): LinearLayout {
@@ -122,7 +149,7 @@ class MainActivity : Activity() {
         val date = TextView(this).apply {
             text = SimpleDateFormat("EEEE, dd MMMM", Locale.getDefault()).format(Date())
             textSize = 14.5f
-            setTextColor(Color.parseColor("#D7E7FF"))
+            setTextColor(Color.parseColor("#EEF6FF"))
             gravity = Gravity.CENTER
             setPadding(0, dp(2), 0, dp(14))
         }
@@ -138,7 +165,7 @@ class MainActivity : Activity() {
         val subtitle = TextView(this).apply {
             text = "Pixel-style launcher with liquid glass"
             textSize = 13f
-            setTextColor(Color.parseColor("#C7D7F7"))
+            setTextColor(Color.parseColor("#EEF6FF"))
             gravity = Gravity.CENTER
             setPadding(0, dp(4), 0, 0)
         }
@@ -157,7 +184,7 @@ class MainActivity : Activity() {
             textSize = 16f
             setSingleLine(true)
             setTextColor(Color.WHITE)
-            setHintTextColor(Color.parseColor("#B9CBEE"))
+            setHintTextColor(Color.parseColor("#EAF2FF"))
             background = searchBackground()
             setPadding(dp(22), dp(15), dp(22), dp(15))
 
@@ -519,83 +546,153 @@ class MainActivity : Activity() {
     }
 
     private fun glassPanel(): GradientDrawable {
-        val colors = if (glassStrong) {
-            intArrayOf(
-                Color.parseColor("#CC162033"),
-                Color.parseColor("#AA243B66"),
-                Color.parseColor("#887A5CFF"),
-                Color.parseColor("#6636D1DC")
-            )
-        } else {
-            intArrayOf(
-                Color.parseColor("#66162033"),
-                Color.parseColor("#55243B66"),
-                Color.parseColor("#447A5CFF")
-            )
-        }
-
-        return GradientDrawable(GradientDrawable.Orientation.TL_BR, colors).apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = dp(30).toFloat()
-            setStroke(dp(1), Color.parseColor("#55FFFFFF"))
-        }
+    val colors = if (glassStrong) {
+        intArrayOf(
+            Color.parseColor("#72FFFFFF"),
+            Color.parseColor("#36FFFFFF"),
+            Color.parseColor("#18FFFFFF")
+        )
+    } else {
+        intArrayOf(
+            Color.parseColor("#46FFFFFF"),
+            Color.parseColor("#24FFFFFF"),
+            Color.parseColor("#10FFFFFF")
+        )
     }
 
-    private fun searchBackground(): GradientDrawable {
-        return GradientDrawable(
-            GradientDrawable.Orientation.LEFT_RIGHT,
-            intArrayOf(
-                Color.parseColor("#35FFFFFF"),
-                Color.parseColor("#1AFFFFFF")
-            )
-        ).apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = dp(28).toFloat()
-            setStroke(dp(1), Color.parseColor("#55FFFFFF"))
-        }
+    return GradientDrawable(GradientDrawable.Orientation.TL_BR, colors).apply {
+        shape = GradientDrawable.RECTANGLE
+        cornerRadius = dp(34).toFloat()
+        setStroke(dp(1), Color.parseColor("#88FFFFFF"))
     }
+}
 
-    private fun transparentCard(): GradientDrawable {
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = dp(22).toFloat()
-            setColor(Color.parseColor("#00FFFFFF"))
-        }
+private fun searchBackground(): GradientDrawable {
+    return GradientDrawable(
+        GradientDrawable.Orientation.LEFT_RIGHT,
+        intArrayOf(
+            Color.parseColor("#78FFFFFF"),
+            Color.parseColor("#38FFFFFF"),
+            Color.parseColor("#22FFFFFF")
+        )
+    ).apply {
+        shape = GradientDrawable.RECTANGLE
+        cornerRadius = dp(32).toFloat()
+        setStroke(dp(1), Color.parseColor("#99FFFFFF"))
     }
+}
 
-    private fun iconGlass(): GradientDrawable {
-        return GradientDrawable(
-            GradientDrawable.Orientation.TL_BR,
-            intArrayOf(
-                Color.parseColor("#46FFFFFF"),
-                Color.parseColor("#1FFFFFFF")
-            )
-        ).apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = dp(22).toFloat()
-            setStroke(dp(1), Color.parseColor("#44FFFFFF"))
-        }
+private fun iconGlass(): GradientDrawable {
+    return GradientDrawable(
+        GradientDrawable.Orientation.TL_BR,
+        intArrayOf(
+            Color.parseColor("#70FFFFFF"),
+            Color.parseColor("#30FFFFFF"),
+            Color.parseColor("#16FFFFFF")
+        )
+    ).apply {
+        shape = GradientDrawable.RECTANGLE
+        cornerRadius = dp(24).toFloat()
+        setStroke(dp(1), Color.parseColor("#80FFFFFF"))
     }
+}
 
-    private fun pillBg(): GradientDrawable {
-        return GradientDrawable(
-            GradientDrawable.Orientation.LEFT_RIGHT,
-            intArrayOf(
-                Color.parseColor("#33FFFFFF"),
-                Color.parseColor("#18FFFFFF")
-            )
-        ).apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = dp(24).toFloat()
-            setStroke(dp(1), Color.parseColor("#44FFFFFF"))
-        }
+private fun pillBg(): GradientDrawable {
+    return GradientDrawable(
+        GradientDrawable.Orientation.LEFT_RIGHT,
+        intArrayOf(
+            Color.parseColor("#64FFFFFF"),
+            Color.parseColor("#28FFFFFF")
+        )
+    ).apply {
+        shape = GradientDrawable.RECTANGLE
+        cornerRadius = dp(26).toFloat()
+        setStroke(dp(1), Color.parseColor("#88FFFFFF"))
     }
-
+}
     private fun toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     private fun dp(value: Int): Int {
         return (value * resources.displayMetrics.density).toInt()
+    }
+}
+class LiquidGlassBackground(context: Context) : View(context) {
+
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+
+        val w = width.toFloat()
+        val h = height.toFloat()
+
+        val background = LinearGradient(
+            0f,
+            0f,
+            w,
+            h,
+            intArrayOf(
+                Color.parseColor("#07111F"),
+                Color.parseColor("#102A43"),
+                Color.parseColor("#233A8B"),
+                Color.parseColor("#2E8C9A")
+            ),
+            floatArrayOf(0f, 0.35f, 0.72f, 1f),
+            Shader.TileMode.CLAMP
+        )
+
+        paint.shader = background
+        canvas.drawRect(0f, 0f, w, h, paint)
+
+        drawBlob(canvas, w * 0.18f, h * 0.12f, w * 0.45f, "#7A5CFF", 120)
+        drawBlob(canvas, w * 0.88f, h * 0.18f, w * 0.42f, "#36D1DC", 105)
+        drawBlob(canvas, w * 0.22f, h * 0.72f, w * 0.52f, "#FF7AB6", 76)
+        drawBlob(canvas, w * 0.82f, h * 0.82f, w * 0.50f, "#64D2FF", 88)
+        drawBlob(canvas, w * 0.52f, h * 0.48f, w * 0.60f, "#FFFFFF", 28)
+
+        paint.shader = null
+        paint.color = Color.parseColor("#22FFFFFF")
+        canvas.drawCircle(w * 0.15f, h * 0.06f, w * 0.12f, paint)
+
+        paint.color = Color.parseColor("#16FFFFFF")
+        canvas.drawCircle(w * 0.86f, h * 0.55f, w * 0.18f, paint)
+    }
+
+    private fun drawBlob(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        color: String,
+        alpha: Int
+    ) {
+        val baseColor = Color.parseColor(color)
+        val centerColor = Color.argb(
+            alpha,
+            Color.red(baseColor),
+            Color.green(baseColor),
+            Color.blue(baseColor)
+        )
+
+        val edgeColor = Color.argb(
+            0,
+            Color.red(baseColor),
+            Color.green(baseColor),
+            Color.blue(baseColor)
+        )
+
+        paint.shader = RadialGradient(
+            cx,
+            cy,
+            radius,
+            centerColor,
+            edgeColor,
+            Shader.TileMode.CLAMP
+        )
+
+        canvas.drawCircle(cx, cy, radius, paint)
+        paint.shader = null
     }
 }
