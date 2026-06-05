@@ -336,7 +336,7 @@ rebuildApps()
 
         val iconWrap = LinearLayout(this).apply {
             gravity = Gravity.CENTER
-            background = iconGlass()
+            background = iconGlass(app.packageName)
             elevation = dp(6).toFloat()
 
             val wrapSize = dp(iconSizeDp + 16)
@@ -582,21 +582,50 @@ private fun searchBackground(): GradientDrawable {
     }
 }
 
-private fun iconGlass(): GradientDrawable {
+private fun iconGlass(packageName: String): GradientDrawable {
+    val accent = appColor(packageName)
+
+    val start = Color.argb(
+        170,
+        Color.red(accent),
+        Color.green(accent),
+        Color.blue(accent)
+    )
+
+    val middle = Color.argb(
+        90,
+        Color.red(accent),
+        Color.green(accent),
+        Color.blue(accent)
+    )
+
+    val end = Color.parseColor("#26FFFFFF")
+
     return GradientDrawable(
         GradientDrawable.Orientation.TL_BR,
-        intArrayOf(
-            Color.parseColor("#70FFFFFF"),
-            Color.parseColor("#30FFFFFF"),
-            Color.parseColor("#16FFFFFF")
-        )
+        intArrayOf(start, middle, end)
     ).apply {
         shape = GradientDrawable.RECTANGLE
         cornerRadius = dp(24).toFloat()
-        setStroke(dp(1), Color.parseColor("#80FFFFFF"))
+        setStroke(dp(1), Color.parseColor("#99FFFFFF"))
     }
 }
 
+private fun appColor(packageName: String): Int {
+    val colors = intArrayOf(
+        Color.parseColor("#7A5CFF"), // purple
+        Color.parseColor("#36D1DC"), // cyan
+        Color.parseColor("#64D2FF"), // blue
+        Color.parseColor("#FF7AB6"), // pink
+        Color.parseColor("#FFD166"), // yellow
+        Color.parseColor("#06D6A0"), // green
+        Color.parseColor("#FF8A65"), // coral
+        Color.parseColor("#B388FF")  // soft violet
+    )
+
+    val index = kotlin.math.abs(packageName.hashCode()) % colors.size
+    return colors[index]
+}
 private fun pillBg(): GradientDrawable {
     return GradientDrawable(
         GradientDrawable.Orientation.LEFT_RIGHT,
